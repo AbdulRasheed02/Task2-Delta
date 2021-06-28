@@ -1,22 +1,18 @@
 package com.example.task2;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.Window;
-import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 
@@ -43,6 +39,9 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
     int wallThickness, sliderThickness, sliderLength;
 
     int score,highScore;
+
+    RectF btn1Background,btn2Background;
+    Paint textPaint;
 
     public CustomViewLayout(Context context) {
         super(context);
@@ -195,6 +194,19 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
         switch (event.getAction()){
 
             case MotionEvent.ACTION_DOWN: {
+                float downx=event.getX();
+                float downy=event.getY();
+
+                if(!flag){
+                    if(downx>=btn1Background.left && downx<=btn1Background.right && downy>= btn1Background.top && downy <= btn1Background.bottom){
+                        context.startActivity(new Intent(context, CustomViewActivity.class));
+                    }
+                    else if(downx>=btn2Background.left && downx<=btn2Background.right && downy>= btn2Background.top && downy <= btn2Background.bottom){
+                        context.startActivity(new Intent(context, MainActivity.class));
+                    }
+
+                }
+
                 return true;
             }
 
@@ -245,9 +257,10 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
 
     private void endGame(){
         paint_white.setTextAlign(Paint.Align.CENTER);
-        paint_white.setTextSize(150);
-        canvas.drawText("GAME OVER",canvas.getWidth()/2,((canvas.getHeight()-topwall.bottom)/2)+250,paint_white);
+        paint_white.setTextSize(145);
+        canvas.drawText("GAME OVER",canvas.getWidth()/2,((canvas.getHeight()-topwall.bottom)/2)-10,paint_white);
         flag=false;
+        buttons();
 
         SharedPreferences prefs = context.getSharedPreferences("highScorePrefsKey", Context.MODE_PRIVATE);
         highScore = prefs.getInt("highScoreKey", 0);
@@ -260,6 +273,39 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt("highScoreKey", highScore);
         editor.commit();
+    }
+
+    private void buttons(){
+        btn1Background=new RectF();
+        btn2Background=new RectF();
+        textPaint=new Paint();
+
+        String str_restart = "RESTART";
+        String str_menu="MENU";
+        int margin=10;
+
+        Paint.FontMetrics fm = new Paint.FontMetrics();
+        textPaint.setColor(Color.parseColor("#808080"));
+        textPaint.setTextSize(90.0F);
+        textPaint.getFontMetrics(fm);
+
+        btn1Background.left=(canvas.getWidth()/2)-margin-(textPaint.measureText(str_restart)/2)-10;
+        btn1Background.top=((canvas.getHeight()-topwall.bottom)/2)+fm.top-margin+550+20;
+        btn1Background.right=(canvas.getWidth()/2)+margin+(textPaint.measureText(str_restart)/2)+10;
+        btn1Background.bottom=((canvas.getHeight()-topwall.bottom)/2)+fm.bottom+margin+550-10;
+
+        btn2Background.left=(canvas.getWidth()/2)-margin-(textPaint.measureText(str_menu)/2)-10;
+        btn2Background.top=btn1Background.top+200;
+        btn2Background.right=(canvas.getWidth()/2)+margin+(textPaint.measureText(str_menu)/2)+10;
+        btn2Background.bottom=btn1Background.bottom+200;
+
+        canvas.drawRect(btn1Background,textPaint);
+        canvas.drawRect(btn2Background,textPaint);
+
+        textPaint.setColor(Color.WHITE);
+
+        canvas.drawText(str_restart,(canvas.getWidth()/2)-(textPaint.measureText(str_restart)/2),((canvas.getHeight()-topwall.bottom)/2)+550,textPaint);
+        canvas.drawText(str_menu,(canvas.getWidth()/2)-(textPaint.measureText(str_menu)/2),((canvas.getHeight()-topwall.bottom)/2)+750,textPaint);
     }
 
     private void paint(){

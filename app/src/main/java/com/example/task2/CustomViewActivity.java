@@ -3,6 +3,7 @@ package com.example.task2;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -49,4 +50,7 @@ public class CustomViewActivity extends Activity{
         customViewLayout.resume();
     }
 
+    public void onBackPressed() {
+        startActivity(new Intent(CustomViewActivity.this, MainActivity.class));
+    }
 }
