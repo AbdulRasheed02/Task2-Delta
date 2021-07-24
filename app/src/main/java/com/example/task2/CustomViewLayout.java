@@ -1,5 +1,6 @@
 package com.example.task2;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,21 +9,21 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.media.MediaPlayer;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
 import androidx.annotation.RequiresApi;
-
 import java.util.Random;
 
 public class CustomViewLayout extends SurfaceView implements Runnable {
 
     Thread thread=null;
     Boolean canDraw=false;
-    Boolean flag;
+    Boolean flag, HardMode, gameOverSoundEffectBool;
     Context context;
 
     Canvas canvas;
@@ -42,6 +43,8 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
 
     RectF btn1Background,btn2Background;
     Paint textPaint;
+
+    MediaPlayer sliderSoundEffect,wallSoundEffect,gameOverSoundEffect;
 
     public CustomViewLayout(Context context) {
         super(context);
@@ -66,7 +69,6 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
     @Override
     public void run() {
         initialize();
-        circleSpeed();
         paint();
 
         while (canDraw){
@@ -107,6 +109,8 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
 
     private void initialize(){
         score=0;
+        Bundle transporter = ((Activity)getContext()).getIntent().getExtras();
+        HardMode=transporter.getBoolean("HardMode");
 
         random=new Random();
         randomx=random.nextInt(2);
@@ -119,6 +123,9 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
         y_direction=1;
         circle_radius=30;
 
+        speedx=10+random.nextInt(5);
+        speedy=10+random.nextInt(5);
+
         topwall=new Rect();
         leftwall=new Rect();
         rightwall=new Rect();
@@ -129,6 +136,12 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
         sliderLength=250;
 
         flag=true;
+
+        sliderSoundEffect=MediaPlayer.create(getContext(),R.raw.slider);
+        wallSoundEffect=MediaPlayer.create(getContext(),R.raw.wall);
+        gameOverSoundEffect=MediaPlayer.create(getContext(),R.raw.gameover);
+
+        gameOverSoundEffectBool=true;
     }
 
     private void walls(){
@@ -153,27 +166,33 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
     }
 
     private void movementCircle(){
-        if(circle_x==0 && circle_y==0){
-            circle_x=canvas.getWidth()/2;
-            circle_y=(canvas.getHeight()-topwall.bottom)/2;
-        }
 
-        if(circle_x+circle_radius>=canvas.getWidth()-wallThickness){
-            x_direction=-1;
-        }
-        if(circle_x-+circle_radius<=0+wallThickness){
-            x_direction=1;
-        }
         if(circle_y-circle_radius>=canvas.getHeight()){
             endGame();
         }
-        if(circle_y-circle_radius<=topwall.bottom){
-            y_direction=1;
-        }
-        circle_x=circle_x+(x_direction*speedx);
-        circle_y=circle_y+(y_direction*speedy);
+        else {
+            if (circle_x == 0 && circle_y == 0) {
+                circle_x = canvas.getWidth() / 2;
+                circle_y = (canvas.getHeight() + topwall.bottom) / 2;
+            }
 
-        canvas.drawCircle(circle_x,circle_y,circle_radius,paint_white);
+            if (circle_x + circle_radius >= canvas.getWidth() - wallThickness) {
+                x_direction = -1;
+                wallSoundEffect.start();
+            }
+            if (circle_x - circle_radius <= wallThickness) {
+                x_direction = 1;
+                wallSoundEffect.start();
+            }
+            if (circle_y - circle_radius <= topwall.bottom) {
+                y_direction = 1;
+                wallSoundEffect.start();
+            }
+            circle_x = circle_x + (x_direction * speedx);
+            circle_y = circle_y + (y_direction * speedy);
+
+            canvas.drawCircle(circle_x, circle_y, circle_radius, paint_white);
+        }
     }
 
 
@@ -199,7 +218,9 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
 
                 if(!flag){
                     if(downx>=btn1Background.left && downx<=btn1Background.right && downy>= btn1Background.top && downy <= btn1Background.bottom){
-                        context.startActivity(new Intent(context, CustomViewActivity.class));
+                        Intent Restart= new Intent(context, CustomViewActivity.class);
+                        Restart.putExtra("HardMode", HardMode);
+                        context.startActivity(Restart);
                     }
                     else if(downx>=btn2Background.left && downx<=btn2Background.right && downy>= btn2Background.top && downy <= btn2Background.bottom){
                         context.startActivity(new Intent(context, MainActivity.class));
@@ -232,21 +253,21 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
     private void collisionDetection(){
         if(circle_x+circle_radius>=slider.left && circle_x-circle_radius<=slider.right && circle_y+circle_radius>=slider.top && circle_y+circle_radius<=slider.bottom){
             y_direction=-1;
-            circleSpeed();
+            sliderSoundEffect.start();
+            if(HardMode){
+               speedx=speedx+1+random.nextInt(2);
+               speedy=speedy+1+random.nextInt(2);
+            }
             score++;
         }
         if(circle_x+circle_radius>=slider.left && circle_x+circle_radius<=slider.left+(sliderLength/2) && circle_y>=slider.top){
             x_direction=-1;
+            sliderSoundEffect.start();
         }
         if(circle_x-circle_radius<=slider.right && circle_x-circle_radius>=slider.left+(sliderLength/2) && circle_y>=slider.top){
             x_direction=1;
+            sliderSoundEffect.start();
         }
-    }
-
-    private void circleSpeed(){
-        random=new Random();
-        speedx=random.nextInt(10)+5;
-        speedy=random.nextInt(10)+5;
     }
 
     private void score(){
@@ -257,8 +278,8 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
 
     private void endGame(){
         paint_white.setTextAlign(Paint.Align.CENTER);
-        paint_white.setTextSize(145);
-        canvas.drawText("GAME OVER",canvas.getWidth()/2,((canvas.getHeight()-topwall.bottom)/2)-10,paint_white);
+        paint_white.setTextSize(120);
+        canvas.drawText("GAME OVER",canvas.getWidth()/2,canvas.getHeight()/2,paint_white);
         flag=false;
         buttons();
 
@@ -273,6 +294,12 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt("highScoreKey", highScore);
         editor.commit();
+
+
+        if(gameOverSoundEffectBool) {
+            gameOverSoundEffect.start();
+            gameOverSoundEffectBool=false;
+        }
     }
 
     private void buttons(){
@@ -286,7 +313,7 @@ public class CustomViewLayout extends SurfaceView implements Runnable {
 
         Paint.FontMetrics fm = new Paint.FontMetrics();
         textPaint.setColor(Color.parseColor("#808080"));
-        textPaint.setTextSize(90.0F);
+        textPaint.setTextSize(75.0F);
         textPaint.getFontMetrics(fm);
 
         btn1Background.left=(canvas.getWidth()/2)-margin-(textPaint.measureText(str_restart)/2)-10;

@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button btn_Play;
+    Button btn_Static, btn_Computer;
     TextView tv_HighScoreText;
     int highScore;
 
@@ -24,18 +24,29 @@ public class MainActivity extends AppCompatActivity {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         this.setTitle("MENU");
 
-        btn_Play=findViewById(R.id.btn_Play);
+        btn_Static =findViewById(R.id.btn_Static);
+        btn_Computer=findViewById(R.id.btn_Computer);
+
         tv_HighScoreText=findViewById(R.id.tv_HighScoreText);
 
-        btn_Play.setText("PLAY");
+        btn_Static.setText("STATIC");
+        btn_Computer.setText("COMPUTER");
 
-        btn_Play.setOnClickListener(new View.OnClickListener() {
+        btn_Static.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, CustomViewActivity.class));
+                startActivity(new Intent(MainActivity.this, StaticMenu.class));
+            }
+        });
+
+        btn_Computer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, ComputerMenu.class));
             }
         });
     }
+
 
     @Override
     protected void onStart() {
