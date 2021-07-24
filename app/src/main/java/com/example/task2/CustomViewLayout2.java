@@ -390,7 +390,7 @@ public class CustomViewLayout2 extends SurfaceView implements Runnable {
         if(powerUp1){
             canvas.drawText("*",powerUp1x,powerUp1y,paint_powerup);
             if(circle_x+circle_radius>=powerUp1x-10 && circle_x-circle_radius<=powerUp1x+10 && circle_y+circle_radius>=powerUp1y-10 && circle_y-circle_radius<=powerUp1y+10 && y_direction==-1){
-                sliderLengthUser=2*sliderLengthUser;
+                sliderLengthUser=sliderLengthUser+(sliderLengthUser/2);
                 powerUp1=false;
             }
         }
